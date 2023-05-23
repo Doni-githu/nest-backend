@@ -1,58 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { BlogDto } from './dto/dto';
-
+import { Blog, BlogType } from './blog.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from "@nestjs/mongoose"
 @Injectable()
 export class BlogService {
-    blog: BlogDto[]
 
-    constructor() {
-        this.blog = [
-            {
-                id: 1,
-                title: "Doni Post",
-                excerpt: 'AWdadwa',
-                description: 'awdadadadddddddddddddddddddddddd'
-            },
-            {
-                id: 2,
-                title: "Doni Post",
-                excerpt: 'AWdadwa',
-                description: 'awdadadadddddddddddddddddddddddd'
-            },
-            {
-                id: 3,
-                title: "Doni Post",
-                excerpt: 'AWdadwa',
-                description: 'awdadadadddddddddddddddddddddddd'
-            },
-        ]
-    }
+    constructor(@InjectModel(Blog.name) private blogModel: Model<BlogType>) { }
 
     async getAll() {
-        return this.blog;
+        return this.blogModel.find()
     }
 
-    async detail(id: string) {
-        return this.blog.find((item) => item.id === parseInt(id))
+    async detail(slug: string) {
+        return this.blogModel.findOne({ slug })
     }
 
     async create(dto: BlogDto) {
-        const data: BlogDto = {
-            id: Date.now(),
-            ...dto
+        const haveTitle = await this.blogModel.findOne({ title: dto.title })
+
+        if (haveTitle) {
+            return {
+                message: 'your title are using'
+            }
         }
-        return [...this.blog, data]
+
+        return this.blogModel.create(dto)
     }
 
-    async update(id: string, dto: BlogDto) {
-        let Found = this.blog.find((item) => item.id === parseInt(id))
-
-        Found = dto
-
-        return Found
+    async update(slug: string, dto: BlogDto) {
+        return this.blogModel.findOneAndUpdate({ slug }, dto)
     }
 
-    async delete(id: string) {
-        return this.blog.filter((item) => item.id !== parseInt(id))
+    async delete(slug: string) {
+        return this.blogModel.findOneAndRemove({ slug })
     }
 }
